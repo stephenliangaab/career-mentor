@@ -1,0 +1,29 @@
+{
+  "name": "career-navigator",
+  "version": "1.0.0",
+  "description": "职径导航 - 互联网职业规划平台",
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "vercel-dev": "vercel dev",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.1",
+    "openai": "^4.28.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@testing-library/dom": "^9.3.0",
+    "@testing-library/jest-dom": "^6.1.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "vercel": "^33.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职径导航 - 5分钟生成你的互联网职业路径地图</title>
+    
+    <!-- Google Fonts - Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 主样式表 -->
+    <link rel="stylesheet" href="src/assets/styles.css">
+</head>
+<body>
+    <!-- 主容器 -->
+    <div id="app">
+        <!-- P0: 首页/引导页 (默认显示) -->
+        <div id="page-home" class="page active">
+            <!-- 渐变背景装饰 -->
+            <div class="bg-decoration"></div>
+            
+            <!-- 顶部Logo -->
+            <div class="home-header">
+                <svg class="logo-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h1 class="home-title">职径导航</h1>
+            </div>
+            
+            <!-- Tab内容区域 -->
+            <main class="home-content">
+                <!-- Tab 1: 职业规划 (默认显示) -->
+                <div id="tab-planning" class="tab-content active">
+                    <div class="container hero-section">
+                        <!-- 价值主张 -->
+                        <div class="hero-content">
+                            <h2 class="hero-title">找到更适合你的职业方向</h2>
+                            <p class="hero-subtitle">基于你的背景和偏好,为你推荐互联网行业最匹配的岗位,并生成清晰的职业发展路径地图</p>
+                            
+                            <!-- 特色标签 -->
+                            <div class="features-tag">
+                                <div class="feature-item">
+                                    <svg class="feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 6V12L16 14M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>5分钟完成</span>
+                                </div>
+                                <div class="feature-item">
+                                    <svg class="feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>31个互联网岗位</span>
+                                </div>
+                                <div class="feature-item">
+                                    <svg class="feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M13 10V3L4 14H11V21L20 10H13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>可执行路径</span>
+                                </div>
+                            </div>
+                            
+                            <!-- CTA按钮 -->
+                            <button class="btn-primary btn-large" onclick="navigateToProfile()">
+                                开始规划我的职业路径
+                                <svg class="btn-icon-right" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            
+                            <!-- 隐私提示 -->
+                            <div class="privacy-notice">
+                                <svg class="privacy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 15V12M12 9H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <p>我们不会收集任何实名信息,所有数据仅用于生成推荐,不会保存或分享</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab 2: 岗位库 -->
+                <div id="tab-library" class="tab-content">
+                    <div class="container library-section">
+                        <!-- 搜索区域 -->
+                        <div class="search-area">
+                            <div class="search-box">
+                                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <input type="text" id="job-search-input" class="search-input" placeholder="搜索20个互联网岗位...">
+                            </div>
+                        </div>
+                        
+                        <!-- 分类筛选 -->
+                        <div class="category-filter">
+                            <button class="category-btn active" data-category="all">全部</button>
+                            <button class="category-btn" data-category="eng">技术</button>
+                            <button class="category-btn" data-category="pm">产品</button>
+                            <button class="category-btn" data-category="ops">运营</button>
+                            <button class="category-btn" data-category="data">数据</button>
+                            <button class="category-btn" data-category="design">设计</button>
+                            <button class="category-btn" data-category="marketing">市场</button>
+                            <button class="category-btn" data-category="sales">销售</button>
+                        </div>
+                        
+                        <!-- 岗位列表 -->
+                        <div class="jobs-grid" id="jobs-library-grid">
+                            <!-- 岗位卡片将通过JS动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+            
+            <!-- 底部Tab切换 -->
+            <div class="bottom-tabs">
+                <button class="tab-btn active" data-tab="planning" onclick="switchHomeTab('planning')">
+                    <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M12 12H15M12 16H15M9 12H9.01M9 16H9.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="tab-label">职业规划</span>
+                </button>
+                <button class="tab-btn" data-tab="library" onclick="switchHomeTab('library')">
+                    <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 6.25278V19.2528M12 6.25278C10.8321 5.47686 9.24649 5 7.5 5C5.75351 5 4.16789 5.47686 3 6.25278V19.2528C4.16789 18.4769 5.75351 18 7.5 18C9.24649 18 10.8321 18.4769 12 19.2528M12 6.25278C13.1679 5.47686 14.7535 5 16.5 5C18.2465 5 19.8321 5.47686 21 6.25278V19.2528C19.8321 18.4769 18.2465 18 16.5 18C14.7535 18 13.1679 18.4769 12 19.2528" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="tab-label">岗位库</span>
+                </button>
+            </div>
+            
+            <!-- 页脚提示 (固定在底部Tab上方) -->
+            <footer class="home-footer">
+                <p>推荐结果仅供参考 • 数据基于公开市场信息整理</p>
+            </footer>
+        </div>
+        
+        <!-- P1: 画像收集页 -->
+        <div id="page-profile" class="page">
+            <!-- 顶部导航条 -->
+            <nav class="navbar">
+                <button class="btn-back" onclick="navigateToHome()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    返回
+                </button>
+                <div class="nav-title">完善你的信息</div>
+                <div class="nav-placeholder"></div>
+            </nav>
+            
+            <main class="container form-container">
+                <div class="form-wrapper">
+                    <!-- 进度指示器 -->
+                    <div class="progress-indicator">
+                        <div class="progress-step active">
+                            <div class="step-circle">1</div>
+                            <span class="step-label">基础信息</span>
+                        </div>
+                        <div class="progress-line"></div>
+                        <div class="progress-step">
+                            <div class="step-circle">2</div>
+                            <span class="step-label">偏好选择</span>
+                        </div>
+                        <div class="progress-line"></div>
+                        <div class="progress-step">
+                            <div class="step-circle">3</div>
+                            <span class="step-label">完成</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 表单区域 -->
+                    <form id="profile-form" class="profile-form">
+                        <!-- 身份 -->
+                        <div class="form-group">
+                            <label class="form-label required">身份</label>
+                            <div class="radio-group">
+                                <label class="radio-card">
+                                    <input type="radio" name="identity" value="graduate" required>
+                                    <div class="radio-content">
+                                        <div class="radio-icon">🎓</div>
+                                        <div class="radio-text">
+                                            <div class="radio-title">应届毕业生</div>
+                                            <div class="radio-desc">即将或刚毕业,寻找第一份工作</div>
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="identity" value="junior" required>
+                                    <div class="radio-content">
+                                        <div class="radio-icon">💼</div>
+                                        <div class="radio-text">
+                                            <div class="radio-title">在职1-3年</div>
+                                            <div class="radio-desc">有一定工作经验,寻求更好机会</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- 学历层级 -->
+                        <div class="form-group">
+                            <label class="form-label required">学历层级</label>
+                            <select class="form-select" name="educationTier" required>
+                                <option value="">请选择你的学历层级</option>
+                                <option value="985">985高校</option>
+                                <option value="211">211高校(非985)</option>
+                                <option value="doubleFirstClass">双一流高校(非985/211)</option>
+                                <option value="other">普通本科及其他</option>
+                            </select>
+                            <input type="hidden" id="educationTierValue" value="">
+                            <p class="form-hint">不同学历层级会影响部分岗位的推荐和建议</p>
+                        </div>
+                        
+                        <!-- 专业 -->
+                        <div class="form-group">
+                            <label class="form-label required">专业</label>
+                            <input type="text" class="form-input" name="major" list="major-suggestions" placeholder="请输入你的专业" required>
+                            <datalist id="major-suggestions">
+                                <option value="计算机科学与技术">
+                                <option value="软件工程">
+                                <option value="信息管理与信息系统">
+                                <option value="市场营销">
+                                <option value="工商管理">
+                                <option value="数据科学">
+                                <option value="电子商务">
+                                <option value="新闻传播">
+                                <option value="视觉传达设计">
+                                <option value="数字媒体艺术">
+                            </datalist>
+                        </div>
+                        
+                        <!-- 当前经历 -->
+                        <div class="form-group">
+                            <label class="form-label">当前岗位/实习经历</label>
+                            <input type="text" class="form-input" name="currentExperience" placeholder="例如:前端实习3个月、学生会运营、无">
+                            <p class="form-hint">选填,但强烈建议填写以获得更精准推荐</p>
+                        </div>
+                        
+                        <!-- 方向偏好 -->
+                        <div class="form-group">
+                            <label class="form-label required">你更感兴趣的方向</label>
+                            <div class="radio-grid">
+                                <label class="radio-tag">
+                                    <input type="radio" name="trackPreference" value="eng" required>
+                                    <span class="tag-content">技术开发</span>
+                                </label>
+                                <label class="radio-tag">
+                                    <input type="radio" name="trackPreference" value="pm" required>
+                                    <span class="tag-content">产品</span>
+                                </label>
+                                <label class="radio-tag">
+                                    <input type="radio" name="trackPreference" value="ops" required>
+                                    <span class="tag-content">运营</span>
+                                </label>
+                                <label class="radio-tag">
+                                    <input type="radio" name="trackPreference" value="data" required>
+                                    <span class="tag-content">数据</span>
+                                </label>
+                                <label class="radio-tag">
+                                    <input type="radio" name="trackPreference" value="design" required>
+                                    <span class="tag-content">设计</span>
+                                </label>
+                                <label class="radio-tag">
+                                    <input type="radio" name="trackPreference" value="marketing" required>
+                                    <span class="tag-content">市场</span>
+                                </label>
+                                <label class="radio-tag">
+                                    <input type="radio" name="trackPreference" value="sales" required>
+                                    <span class="tag-content">销售</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- 兴趣标签 -->
+                        <div class="form-group">
+                            <label class="form-label required">兴趣标签 <span class="label-hint">(最多选5个)</span></label>
+                            <div class="checkbox-grid">
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="写代码">
+                                    <span class="tag-content">写代码</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="做产品规划">
+                                    <span class="tag-content">做产品规划</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="与人沟通">
+                                    <span class="tag-content">与人沟通</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="做数据分析">
+                                    <span class="tag-content">做数据分析</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="做创意设计">
+                                    <span class="tag-content">做创意设计</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="做内容">
+                                    <span class="tag-content">做内容</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="做增长">
+                                    <span class="tag-content">做增长</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="做商务谈判">
+                                    <span class="tag-content">做商务谈判</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="做客户关系">
+                                    <span class="tag-content">做客户关系</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="做项目推进">
+                                    <span class="tag-content">做项目推进</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="喜欢稳定">
+                                    <span class="tag-content">喜欢稳定</span>
+                                </label>
+                                <label class="checkbox-tag">
+                                    <input type="checkbox" name="interestTags" value="喜欢挑战">
+                                    <span class="tag-content">喜欢挑战</span>
+                                </label>
+                            </div>
+                            <p class="form-hint" id="interest-count">已选择 0/5</p>
+                        </div>
+                        
+                        <!-- MBTI -->
+                        <div class="form-group">
+                            <label class="form-label">MBTI类型 <span class="label-hint">(可选)</span></label>
+                            <select class="form-select" name="mbti">
+                                <option value="unknown">不知道/暂不填写</option>
+                                <option value="INTJ">INTJ - 建筑师</option>
+                                <option value="INTP">INTP - 逻辑学家</option>
+                                <option value="ENTJ">ENTJ - 指挥官</option>
+                                <option value="ENTP">ENTP - 辩论家</option>
+                                <option value="INFJ">INFJ - 提倡者</option>
+                                <option value="INFP">INFP - 调停者</option>
+                                <option value="ENFJ">ENFJ - 主人公</option>
+                                <option value="ENFP">ENFP - 竞选者</option>
+                                <option value="ISTJ">ISTJ - 物流师</option>
+                                <option value="ISFJ">ISFJ - 守卫者</option>
+                                <option value="ESTJ">ESTJ - 总经理</option>
+                                <option value="ESFJ">ESFJ - 执政官</option>
+                                <option value="ISTP">ISTP - 鉴赏家</option>
+                                <option value="ISFP">ISFP - 探险家</option>
+                                <option value="ESTP">ESTP - 企业家</option>
+                                <option value="ESFP">ESFP - 表演者</option>
+                            </select>
+                            <button type="button" class="btn-link" onclick="alert('简测功能即将上线')">不知道?点击快速测试 →</button>
+                        </div>
+                        
+                        <!-- 提交按钮 -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary btn-large btn-full">
+                                生成我的推荐
+                                <svg class="btn-icon-right" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M13 10V3L4 14H11V21L20 10H13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div>
+        
+        <!-- P2: 推荐结果页 -->
+        <div id="page-result" class="page">
+            <!-- 顶部导航条 -->
+            <nav class="navbar">
+                <button class="btn-back" onclick="navigateToProfile()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    返回修改
+                </button>
+                <div class="nav-title">推荐结果</div>
+                <button class="btn-text" onclick="regenerateRecommendation()">重新生成</button>
+            </nav>
+            
+            <main class="container result-container">
+                <!-- 结果摘要 -->
+                <div class="result-summary">
+                    <h2 class="result-title">为你推荐以下职业方向</h2>
+                    <p class="result-desc" id="result-summary-text">基于你的背景和偏好,我们为你精选了3个最匹配的岗位</p>
+                </div>
+                
+                <!-- 推荐卡片列表 -->
+                <div class="job-cards" id="job-cards-container">
+                    <!-- 卡片将通过JS动态生成 -->
+                </div>
+                
+                <!-- 置信度提示 -->
+                <div class="confidence-notice" id="confidence-notice">
+                    <svg class="notice-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 16H12V12H11M12 8H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p>推荐结果仅供参考,建议结合自身情况综合判断</p>
+                </div>
+            </main>
+        </div>
+        
+        <!-- P3: 岗位详情页 -->
+        <div id="page-detail" class="page">
+            <!-- 顶部导航条 -->
+            <nav class="navbar">
+                <button class="btn-back" onclick="navigateToResult()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    返回推荐
+                </button>
+                <div class="nav-title" id="detail-nav-title">岗位详情</div>
+                <div class="nav-placeholder"></div>
+            </nav>
+            
+            <main class="container detail-container">
+                <div class="detail-wrapper" id="detail-content">
+                    <!-- 详情内容将通过JS动态生成 -->
+                </div>
+            </main>
+        </div>
+        
+        <!-- 加载中遮罩 -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">正在生成推荐...</p>
+        </div>
+    </div>
+    
+    <!-- 脚本文件 -->
+    <script src="src/data/jobs-data.js"></script>
+    <script src="src/data/companies-data.js"></script>
+    <script src="src/app.js"></script>
+</body>
+</html>
