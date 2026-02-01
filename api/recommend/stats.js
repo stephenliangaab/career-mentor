@@ -3,10 +3,10 @@
  *
  * 路由说明:
  * - 文件路径 `api/recommend/stats.js` 会自动映射为接口路径 `/api/recommend/stats`
- * - 这样就不需要在 `vercel.json` 里写旧版的 `routes` 规则了
+ * - 因此不需要在 `vercel.json` 里写旧版的 `routes`
  */
 
-// 从同目录的 recommend.js 复用统计处理逻辑(避免重复代码)
+// 复用 recommend.js 里的统计逻辑，避免复制粘贴
 import { statsHandler } from '../recommend.js';
 
 /**
@@ -15,7 +15,7 @@ import { statsHandler } from '../recommend.js';
  * @returns {Response} - 响应对象
  */
 export default async function handler(request) {
-  // 允许浏览器的跨域预检请求(Preflight)
+  // 允许浏览器跨域预检请求(Preflight)
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204 });
   }
@@ -28,7 +28,6 @@ export default async function handler(request) {
     });
   }
 
-  // 调用复用的统计处理逻辑
   return statsHandler(request);
 }
 
