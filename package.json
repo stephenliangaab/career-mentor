@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@vercel/kv": "^1.0.1",
-    "openai": "^4.28.0"
+    "openai": "^4.28.0",
+    "redis": "^4.7.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",

@@ -11,8 +11,135 @@
 
 // 导入依赖(Vercel会自动处理node_modules)
 import { kv } from '@vercel/kv'; // Vercel KV存储
+import { createClient } from 'redis'; // Redis客户端(兼容REDIS_URL)
 import OpenAI from 'openai'; // OpenAI SDK
 import crypto from 'crypto';
+
+// ==================== 存储适配层(KV / Redis 二选一) ====================
+
+// 是否存在 Vercel KV 所需的环境变量
+const HAS_VERCEL_KV =
+    Boolean(process.env.KV_REST_API_URL) &&
+    Boolean(process.env.KV_REST_API_TOKEN);
+
+// 是否存在 Redis 连接串（你现在在 Vercel 里看到的就是这个：REDIS_URL）
+const HAS_REDIS_URL = Boolean(process.env.REDIS_URL);
+
+// 全局复用 Redis 连接（Serverless 环境下可减少重复握手）
+let redisClient = null;
+
+/**
+ * 获取 Redis Client（懒连接）
+ * 注意：如果 REDIS_URL 不存在，会抛错；调用方需在 try/catch 内使用
+ */
+async function getRedisClient() {
+    // 已创建且可用时直接复用
+    if (redisClient && redisClient.isOpen) return redisClient;
+
+    // 创建新的连接
+    redisClient = createClient({
+        url: process.env.REDIS_URL
+    });
+
+    // 监听错误，避免进程崩溃
+    redisClient.on('error', (err) => {
+        console.error('Redis连接错误:', err);
+    });
+
+    // 建立连接
+    await redisClient.connect();
+    return redisClient;
+}
+
+/**
+ * 存储层读取（KV优先，其次Redis；都不可用则返回null）
+ * @param {string} key
+ * @returns {any|null}
+ */
+async function storeGet(key) {
+    // 优先使用 Vercel KV（如果已配置）
+    if (HAS_VERCEL_KV) {
+        return await kv.get(key);
+    }
+
+    // 其次使用 Redis（如果已配置）
+    if (HAS_REDIS_URL) {
+        const client = await getRedisClient();
+        const value = await client.get(key);
+        if (value === null || value === undefined) return null;
+
+        // 尝试按JSON反序列化（缓存对象/数字计数都能覆盖）
+        try {
+            return JSON.parse(value);
+        } catch (e) {
+            return value;
+        }
+    }
+
+    // 都没配置：视为不可用
+    return null;
+}
+
+/**
+ * 存储层写入（KV/Redis）
+ * @param {string} key
+ * @param {any} value
+ * @param {number|null} ttlSeconds - 过期秒数（可选）
+ */
+async function storeSet(key, value, ttlSeconds = null) {
+    // KV：可直接存对象
+    if (HAS_VERCEL_KV) {
+        if (ttlSeconds) {
+            await kv.set(key, value, { ex: ttlSeconds });
+        } else {
+            await kv.set(key, value);
+        }
+        return;
+    }
+
+    // Redis：统一存字符串
+    if (HAS_REDIS_URL) {
+        const client = await getRedisClient();
+        const payload = JSON.stringify(value);
+        if (ttlSeconds) {
+            await client.set(key, payload, { EX: ttlSeconds });
+        } else {
+            await client.set(key, payload);
+        }
+    }
+}
+
+/**
+ * 存储层自增（KV/Redis）
+ * @param {string} key
+ * @returns {number} 自增后的值
+ */
+async function storeIncr(key) {
+    if (HAS_VERCEL_KV) {
+        return await kv.incr(key);
+    }
+    if (HAS_REDIS_URL) {
+        const client = await getRedisClient();
+        return await client.incr(key);
+    }
+    return 0;
+}
+
+/**
+ * 存储层设置过期（KV/Redis）
+ * @param {string} key
+ * @param {number} ttlSeconds
+ */
+async function storeExpire(key, ttlSeconds) {
+    if (HAS_VERCEL_KV) {
+        await kv.expire(key, ttlSeconds);
+        return;
+    }
+    if (HAS_REDIS_URL) {
+        const client = await getRedisClient();
+        await client.expire(key, ttlSeconds);
+    }
+}
 
 // ==================== 配置常量 ====================
 
@@ -53,7 +180,7 @@ async function checkRateLimit(ip) {
         
         // 检查月度限流
         const monthKey = `ratelimit:month:${currentMonth}`;
-        const monthCount = await kv.get(monthKey) || 0;
+        const monthCount = await storeGet(monthKey) || 0;
         
         if (monthCount >= CONFIG.LIMITS.MONTHLY_MAX) {
             return {
@@ -64,7 +191,7 @@ async function checkRateLimit(ip) {
         
         // 检查日限流
         const dayKey = `ratelimit:day:${today}`;
-        const dayCount = await kv.get(dayKey) || 0;
+        const dayCount = await storeGet(dayKey) || 0;
         
         if (dayCount >= CONFIG.LIMITS.DAILY_MAX) {
             return {
@@ -75,7 +202,7 @@ async function checkRateLimit(ip) {
         
         // 检查IP限流
         const ipKey = `ratelimit:ip:${ip}:${today}`;
-        const ipCount = await kv.get(ipKey) || 0;
+        const ipCount = await storeGet(ipKey) || 0;
         
         if (ipCount >= CONFIG.LIMITS.IP_DAILY_MAX) {
             return {
@@ -104,18 +231,18 @@ async function incrementRateLimit(ip) {
         
         // 增加月度计数
         const monthKey = `ratelimit:month:${currentMonth}`;
-        await kv.incr(monthKey);
-        await kv.expire(monthKey, 2592000); // 30天过期
+        await storeIncr(monthKey);
+        await storeExpire(monthKey, 2592000); // 30天过期
         
         // 增加日计数
         const dayKey = `ratelimit:day:${today}`;
-        await kv.incr(dayKey);
-        await kv.expire(dayKey, 86400); // 24小时过期
+        await storeIncr(dayKey);
+        await storeExpire(dayKey, 86400); // 24小时过期
         
         // 增加IP计数
         const ipKey = `ratelimit:ip:${ip}:${today}`;
-        await kv.incr(ipKey);
-        await kv.expire(ipKey, 86400); // 24小时过期
+        await storeIncr(ipKey);
+        await storeExpire(ipKey, 86400); // 24小时过期
         
     } catch (error) {
         console.error('限流计数失败:', error);
@@ -154,7 +281,7 @@ function generateCacheKey(userProfile) {
  */
 async function getCachedRecommendation(cacheKey) {
     try {
-        const cached = await kv.get(cacheKey);
+        const cached = await storeGet(cacheKey);
         return cached;
     } catch (error) {
         console.error('缓存读取失败:', error);
@@ -169,9 +296,7 @@ async function getCachedRecommendation(cacheKey) {
  */
 async function setCachedRecommendation(cacheKey, recommendation) {
     try {
-        await kv.set(cacheKey, recommendation, {
-            ex: CONFIG.CACHE.TTL_SECONDS
-        });
+        await storeSet(cacheKey, recommendation, CONFIG.CACHE.TTL_SECONDS);
     } catch (error) {
         console.error('缓存写入失败:', error);
     }
@@ -570,8 +695,8 @@ export async function statsHandler(request) {
         const today = new Date().toISOString().split('T')[0];
         const currentMonth = new Date().toISOString().slice(0, 7);
         
-        const monthCount = await kv.get(`ratelimit:month:${currentMonth}`) || 0;
-        const dayCount = await kv.get(`ratelimit:day:${today}`) || 0;
+        const monthCount = await storeGet(`ratelimit:month:${currentMonth}`) || 0;
+        const dayCount = await storeGet(`ratelimit:day:${today}`) || 0;
         
         return new Response(
             JSON.stringify({
