@@ -392,6 +392,11 @@ function generateRuleBasedRecommendation(userProfile, allJobs) {
  * @returns {Response} - 响应对象
  */
 export default async function handler(request) {
+    // 允许浏览器跨域预检请求(Preflight)，避免 OPTIONS 被当成非法方法导致 405
+    if (request.method === 'OPTIONS') {
+        return new Response(null, { status: 204 });
+    }
+
     // 只允许POST请求
     if (request.method !== 'POST') {
         return new Response(

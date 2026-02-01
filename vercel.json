@@ -6,18 +6,6 @@
       "use": "@vercel/node"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/recommend",
-      "dest": "/api/recommend.js",
-      "methods": ["POST", "OPTIONS"]
-    },
-    {
-      "src": "/api/recommend/stats",
-      "dest": "/api/recommend.js",
-      "methods": ["GET"]
-    }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",
