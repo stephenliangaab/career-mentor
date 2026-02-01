@@ -158,13 +158,35 @@ const CONFIG = {
         KEY_PREFIX: 'recommend' // 缓存key前缀
     },
     
-    // OpenAI配置
+    // AI配置（默认走 OpenAI SDK；也支持 DeepSeek 原生接口）
     OPENAI: {
-        MODEL: 'gpt-3.5-turbo',  // 使用低成本模型
+        // 模型名：默认 gpt-3.5-turbo；如使用 DeepSeek，通常是 deepseek-chat（以你控制台为准）
+        MODEL: process.env.AI_MODEL || process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
         MAX_TOKENS: 800,          // 限制输出token数
         TEMPERATURE: 0.7
     }
 };
+
+/**
+ * 从模型输出中尽量提取出 JSON 字符串（兼容非 json_object 模式）
+ * @param {string} text
+ * @returns {string}
+ */
+function extractJsonText(text) {
+    if (!text) return '';
+    const trimmed = String(text).trim();
+
+    // 优先处理 ```json ... ``` 代码块
+    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (fenced && fenced[1]) return fenced[1].trim();
+
+    // 再尝试截取第一个 { 到最后一个 } 之间的内容
+    const start = trimmed.indexOf('{');
+    const end = trimmed.lastIndexOf('}');
+    if (start >= 0 && end > start) return trimmed.slice(start, end + 1);
+
+    return trimmed;
+}
 
 // ==================== 限流函数 ====================
 
@@ -311,33 +333,128 @@ async function setCachedRecommendation(cacheKey, recommendation) {
  * @returns {Object} - AI推荐结果
  */
 async function generateAIRecommendation(userProfile, candidateJobs) {
-    const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
-    });
+    // 兼容两种 AI 调用方式：
+    // 1) DeepSeek 原生接口（你提供的）：https://api.deepseek.com/chat/completions
+    // 2) OpenAI SDK（默认）
+    const aiProvider = (process.env.AI_PROVIDER || '').toLowerCase(); // deepseek | openai | 为空(自动)
+
+    const deepseekKey =
+        process.env.DEEPSEEK_API_KEY ||
+        (aiProvider === 'deepseek' ? process.env.OPENAI_API_KEY : undefined); // 兼容你把 Key 填在 OPENAI_API_KEY 的情况
+
+    const openaiKey =
+        process.env.OPENAI_API_KEY ||
+        process.env.AI_API_KEY;
+
+    // 如果明确指定 deepseek 或者提供了 DEEPSEEK_API_KEY，则优先走 deepseek 原生接口
+    const shouldUseDeepSeek =
+        aiProvider === 'deepseek' || Boolean(deepseekKey);
+
+    // 延迟创建 OpenAI client（只有需要时才创建）
+    let openai = null;
+    if (!shouldUseDeepSeek) {
+        const baseURL =
+            process.env.AI_BASE_URL ||
+            process.env.OPENAI_BASE_URL;
+
+        openai = new OpenAI({
+            apiKey: openaiKey,
+            ...(baseURL ? { baseURL } : {})
+        });
+    }
     
     // 构建prompt
     const prompt = buildPrompt(userProfile, candidateJobs);
     
     try {
-        const completion = await openai.chat.completions.create({
-            model: CONFIG.OPENAI.MODEL,
-            messages: [
-                {
-                    role: 'system',
-                    content: '你是一位专业的职业规划顾问,擅长为中国大学生和职场新人提供精准的互联网岗位推荐。你的回复必须是严格的JSON格式。'
+        const messages = [
+            {
+                role: 'system',
+                content: '你是一位专业的职业规划顾问,擅长为中国大学生和职场新人提供精准的互联网岗位推荐。你的回复必须是严格的JSON格式。'
+            },
+            {
+                role: 'user',
+                content: prompt
+            }
+        ];
+
+        // ==================== 1) DeepSeek 原生调用 ====================
+        if (shouldUseDeepSeek) {
+            const baseUrl =
+                process.env.DEEPSEEK_BASE_URL ||
+                'https://api.deepseek.com';
+
+            const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
+
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${deepseekKey}`
                 },
-                {
-                    role: 'user',
-                    content: prompt
-                }
-            ],
+                body: JSON.stringify({
+                    model: CONFIG.OPENAI.MODEL || 'deepseek-chat',
+                    messages,
+                    temperature: CONFIG.OPENAI.TEMPERATURE,
+                    max_tokens: CONFIG.OPENAI.MAX_TOKENS,
+                    stream: false
+                })
+            });
+
+            if (!resp.ok) {
+                const text = await resp.text().catch(() => '');
+                throw new Error(`DeepSeek API错误(${resp.status}): ${text || resp.statusText}`);
+            }
+
+            const json = await resp.json();
+            const responseText = json?.choices?.[0]?.message?.content || '';
+            const result = JSON.parse(extractJsonText(responseText));
+
+            // 验证返回结构
+            if (!result.topJobs || !Array.isArray(result.topJobs)) {
+                throw new Error('AI返回格式错误');
+            }
+
+            return {
+                success: true,
+                data: result,
+                method: 'ai'
+            };
+        }
+
+        // ==================== 2) OpenAI SDK 调用 ====================
+        const requestPayload = {
+            model: CONFIG.OPENAI.MODEL,
+            messages,
             max_tokens: CONFIG.OPENAI.MAX_TOKENS,
-            temperature: CONFIG.OPENAI.TEMPERATURE,
-            response_format: { type: "json_object" } // 强制JSON输出
-        });
-        
+            temperature: CONFIG.OPENAI.TEMPERATURE
+        };
+
+        // 默认开启 JSON 模式；如你使用的服务不支持，可在环境变量里关闭：
+        // AI_DISABLE_RESPONSE_FORMAT=1
+        if (process.env.AI_DISABLE_RESPONSE_FORMAT !== '1') {
+            requestPayload.response_format = { type: 'json_object' }; // 强制JSON输出（OpenAI支持）
+        }
+
+        let completion;
+        try {
+            completion = await openai.chat.completions.create(requestPayload);
+        } catch (error) {
+            // 有些 OpenAI 兼容接口不支持 response_format，这里自动重试一次（不带 response_format）
+            const canRetry =
+                requestPayload.response_format &&
+                String(error?.message || '').toLowerCase().includes('response_format');
+
+            if (canRetry) {
+                delete requestPayload.response_format;
+                completion = await openai.chat.completions.create(requestPayload);
+            } else {
+                throw error;
+            }
+        }
+
         const responseText = completion.choices[0].message.content;
-        const result = JSON.parse(responseText);
+        const result = JSON.parse(extractJsonText(responseText));
         
         // 验证返回结构
         if (!result.topJobs || !Array.isArray(result.topJobs)) {
@@ -520,6 +637,17 @@ export default async function handler(request) {
     // 允许浏览器跨域预检请求(Preflight)，避免 OPTIONS 被当成非法方法导致 405
     if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204 });
+    }
+
+    // 统计接口：GET /api/recommend/stats
+    // 说明：vercel.json 会把 /api/recommend/stats 也路由到本文件，所以这里要分流处理
+    try {
+        const url = new URL(request.url);
+        if (request.method === 'GET' && url.pathname.endsWith('/api/recommend/stats')) {
+            return await statsHandler(request);
+        }
+    } catch (error) {
+        // URL解析失败时忽略，继续走默认逻辑
     }
 
     // 只允许POST请求
